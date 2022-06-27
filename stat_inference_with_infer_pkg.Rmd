@@ -5,9 +5,9 @@ output: rmarkdown::github_document
 
 Statistical inference notebook objective: estimate an unknown population parameter of interest using a sample or test if a hypothesis has sufficient supporting evidence. 
 
-Strength of the Infer package is a R tidy approach to simulation based inference methods. Mathematical theory based approaches can also be used when conditions are met. Simulation based methods tend to require fewer conditions for inference and offer more straight forward methods to visualize results. When conditions hold, we'd expect conclusions from each method type to closely align. This notebook explores simulation based methods for inference.
+Strength of the Infer package is a R tidy approach to simulation based inference methods. Mathematical theory based approaches can also be used when conditions are met. Simulation based methods tend to require fewer conditions for inference and offer more straight forward methods to visualize results. When conditions hold, we'd expect conclusions from each method type (simulation or theory based) to closely align. This notebook explores simulation based methods for inference.
 
-#### Common inference use cases with sample data:
+#### Notebook Inference Scenarios 
 - Population proportion	 
 - Difference in population proportions	
 - Population mean	 
@@ -15,15 +15,15 @@ Strength of the Infer package is a R tidy approach to simulation based inference
 - Population regression slope
 
 ```{r echo=FALSE, include = FALSE}
-knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, dpi=700)
 ```
 
 ```{r}
 required_packages <- c('tidyverse','openintro','moderndive', 'janitor', 
-                       'infer', 'scales', 'Lahman', 'skimr', 'mlbench', 
-                       'AmesHousing', 'ggfortify')
+                       'infer', 'scales', 'Lahman', 'AmesHousing', 'ggfortify')
 
 for(p in required_packages){
+  # uncomment to automatically install packages not previously installed
   # if(!require(p,character.only = TRUE)) 
   #     install.packages(p, repos = "http://cran.us.r-project.org")
   library(p,character.only = TRUE)
@@ -31,9 +31,9 @@ for(p in required_packages){
 ```
 
 # Population Proportion
-- Use case: estimate population proportion using random sample from the population. Binary category variable used to determine success and failure. Success case used to establish proportion metric.
+- Example use case: estimate population proportion using random sample from the population. Binary category variable used to determine success and failure. Success case used to establish proportion metric.
 - Taking a census/counting a large population is often not feasible and/or resource intensive. Sample from the population can be used to infer about the population proportion.
-- Bootstrap simulation method: used to study the effects of sample variability (i.e. repeated samples with replacement). Sample variability expected to vary sample to sample (as the sample observations end up being different sample to sample in the real world). 
+- Bootstrap simulation method: used to study the effects of sample variability. Sample variability =  sample statistic expected to vary around the population parameter sample to sample.
 - Conditions for using bootstrap simulation: sample needs to be representative of the population of interest and generated without bias (random independent sample from the population assumed to meet these criteria). Watch out for small sample size. Starting point rule of thumb: 10 or more success and failure observations in the sample.  
 
 Known population which we can pretend to only have a sample of.
@@ -44,14 +44,14 @@ moderndive::bowl %>% tabyl(color)
 
 Pretend we don't have time to count the entire bowl of 2.4k balls. 
 We want to estimate the red ball population proportion using a sample we randomly generate.
-This general idea is how polling works. Stakeholders don't have time/resources to collect responses from the entire population. As a result, pollsters attempt to collect responses from a representative sample to estimate population parameter of interest.
+This general idea is how polling works. Stakeholders don't have time/resources to collect responses from the entire voting population. As a result, pollsters attempt to collect responses from a representative sample to estimate population parameter of interest.
 ```{r}
 set.seed(123)
 bowl_sample <- bowl %>% sample_n(100)
 ```
 
 Visualization of estimation process for population proportion.
-95% confident the below interval captures the value of the population proportion of red balls.
+We can say we're 95% confident the below interval captures the value of the population proportion of red balls.
 ```{r}
 set.seed(321)
 boot_bowl_dist <- bowl_sample %>%
@@ -60,7 +60,7 @@ boot_bowl_dist <- bowl_sample %>%
   calculate(stat="prop") 
 
 boot_bowl_ci <- boot_bowl_dist %>%
-  # standard error type can also be used if dist is normally distributed
+  # standard error internval type can also be used if dist is normally distributed
   get_confidence_interval(level=0.95, type="percentile")
 
 boot_bowl_ci_lower <- round(boot_bowl_ci %>% pull(lower_ci), 2)
@@ -80,15 +80,15 @@ boot_bowl_dist %>%
 ```
 
 ## Difference in Group Proportions
-- Use case: hypothesis test comparing the difference in proportions between two groups of random samples from a population. For example, experiment design where treatment and control are randomized then we compare treatment success rate vs control success rate.
+- Example use case: hypothesis test comparing the difference in proportions between two groups of random samples from a population. For example, experiment design where treatment and control are randomized then we compare treatment success rate vs control success rate.
 - Null hypothesis: group 1 proportion = group 2 proportion
 - Alternative hypothesis: group 1 proportion != group 2 proportion
-- Bootstrap simulation often used to derive confidence interval for inference. Permutation simulation can be used to derive p-value. Permutation simulation shuffles the proportion variable to generate the null distribution of no difference in group proportions.
+- Bootstrap simulation can be used to derive confidence interval for inference. Permutation simulation can be used to derive p-value. Permutation simulation shuffles the proportion variable to generate the null distribution of no difference in group proportions.
 - Conditions: observations are independent between and within groups (i.e. knowing one value doesn't give us information about another value). Watch out for small sample size. Starting point rule of thumb: 10 or more success and failure observations in the sample.  
 
-#### Investigate UK smoking survey data:
+#### Investigate UK smoking survey data
 - Null: no difference in smoking rates between females and males
-- Alt: there is a difference smoking rates between females and males
+- Alt: there is a difference in smoking rates between females and males
 
 To validate independence conditions we'd need to learn more about the data collection process (assuming conditions are met for this example). Success and failure observation condition passes.
 
@@ -101,7 +101,7 @@ smoking %>%
 ```
 
 Female vs male difference in smoking proportion hypothesis test (alpha significance level = 0.05).
-0.498 p-value is represented by shaded region below. P-value represents the probability of observing a difference as extreme or more extreme as the one observed assuming the null distribution is true.
+0.506 p-value is represented by shaded region below. P-value represents the probability of observing a difference as extreme or more extreme as the one observed assuming the null distribution is true.
 
 We fail to reject the null hypothesis given the p-value is above our specified alpha significance level. Said differently, we don't have enough evidence to reject the null hypothesis.
 
@@ -135,8 +135,8 @@ smoke_null_dist %>%
 ```
 
 # Population mean
-- Use case: we're not able to calculate a population mean of interest due to lack of data, resourcing, or feasibility. We can use a random sample to estimate the population mean.
-- Bootstrap simulation used to derive confidence interval for population mean estimation.
+- Example use case: we're not able to calculate a population mean of interest due to lack of data, resourcing, or feasibility. We can use a random sample to estimate the population mean.
+- Bootstrap simulation can be used to derive confidence interval for population mean estimation.
 - Conditions: sample observations are independent and sample size is as large as possible. Estimation might be unstable for small samples.
 
 Note: in practice, we wouldn't have the population parameter of interest hence the need for using a sample to infer about the population. If we have data on the full population with the parameter of interest then we simply derive the population mean on the full population (inference not needed).
@@ -145,7 +145,6 @@ Using MLB baseball player salary data for this example.
 ```{r}
 player_sal_2016 <- Lahman::Salaries %>% 
   filter(yearID==2016)
-# skim(player_sal_2016, salary)
 ```
 
 Let's pretend we don't have the salary data on all MLB baseball players from 2016. For some reason we can only get salary data for a random sample of 50 players. We'll use the sample to estimate the population salary mean in 2016. The sample mean below is one form of estimating the population mean. However, confidence interval method below is preferred as it accounts for sampling variability.
@@ -153,20 +152,21 @@ Let's pretend we don't have the salary data on all MLB baseball players from 201
 set.seed(162)
 sample_player_sal_2016 <- Salaries %>% 
   filter(yearID==2016) %>%
-  sample_n(50)
+  sample_n(100)
 ```
 
 Sample point estimate for population mean.
 ```{r}
 sample_player_sal_2016 %>% 
-  summarise(sample_average_player_salary = dollar(mean(salary)))
+  summarise(sample_average_player_salary = dollar(mean(salary))) %>%
+  pull(sample_average_player_salary)
 ```
 
 Estimate population mean using bootstrap simulation.
-90% confident player average salary is between `~$3.67M` and `~$6.46M`. The confidence interval is the plausible range for the population mean.
-90% confident: is the notion that over the long run if we were to take repeated samples we'd expect 90% of the intervals to capture the true population mean.
+90% confident player average salary is between lower bound and upper bound below. The confidence interval is the plausible range for the population mean.
+90% confident: over the long run if we were to take repeated samples we'd expect 90% of the intervals to capture the true population mean.
 
-We can confirm the confidence interval captures the population mean of interest. This wouldn't be the case in practice as the population mean would be unknown and we'll use the sample to estimate the population mean.
+With this example can check if the confidence interval captures the true population mean. This wouldn't be the case in practice as the population mean would be unknown and we'll use the sample to estimate the population mean.
 
 ```{r}
 set.seed(162)
@@ -195,9 +195,9 @@ boot_sal_dist %>%
 ```
 
 # Difference in population means	 
-- Use case: do group means differ in the population of interest? i.e. do MLB pitchers have different average salaries than MLB catchers?
-- Null hypothesis: diff between average MLB pitcher salary and average MLB catcher salary = 0
-- Alt hypothesis: diff between average MLB pitcher salary and average MLB catcher salary != 0
+- Example use case: do group means differ in the population of interest? i.e. do MLB pitchers have different average salaries than MLB catchers?
+- Null hypothesis: difference between average MLB pitcher salary and average MLB catcher salary = 0
+- Alt hypothesis: difference between average MLB pitcher salary and average MLB catcher salary != 0
 - Conditions: sample observations are independent within and between groups. Sample size is as large as possible. Estimation might be unstable for small samples.
 
 For sake of example, we'll assume the below sample data meets required conditions and addresses question of interest. In practice, more care is given to validating and crafting sample data. Technically, the below sample data is biased to players who had appearances in the 2016 season and had salary data available. Again, we'll pretend the population data isn't available and the sample of pitcher/catcher data is useful.
@@ -262,7 +262,7 @@ diff_sal_null_dist %>%
 ```
 
 We can also use bootstrap simulation to generate a confidence interval for the difference in average salary.
-Confidence interval contains zero which suggests we don't have enough evidence to reject the null hypothesis that the difference between average salary is zero. In other words, at 95% confidence, it's plausible that true population difference in average salary is between `-$686k` and `$4.2M` (which includes zero so it's plausible the true difference might be zero). 
+Confidence interval contains zero which suggests we don't have enough evidence to reject the null hypothesis that the difference between average salary is zero. In other words, at 95% confidence, it's plausible that true population difference in average salary is between lower bound and upper bound (which includes zero so it's plausible the true difference might be zero). 
 
 ```{r}
 set.seed(333)
@@ -291,7 +291,7 @@ diff_sal_boot_dist %>%
 ```
 
 # Population regression slope
-- Use case: Using a sample to infer about a population, does the regression line for a sample have a non-zero slope? i.e. is there an association between house price sold and house living areas square feet?
+- Example use case: using a sample to infer about a population slope, does the regression line for a sample have a non-zero slope? i.e. is there an association between house price sold and house living areas square feet?
 - Null hypothesis: slope = 0
 - Alt hypothesis: slope != 0
 - We can use similar permutation and bootstrap simulation methods applied above.
@@ -303,7 +303,7 @@ diff_sal_boot_dist %>%
 - Also, watch out for outliers and small sample sizes. "L", "N", "E" tend to be confirmed via residual visual analysis (sophisticated statistical approaches can also be used). "I" needs to be confirmed in context of the analysis problem.
 
 Pretend we're a real estate agent and we only sell residential homes 750 sqft or larger in Ames, Iowa.
-We're able to get a random sample of home sales data for our region of interest. 
+We're able to get a random sample of home sales data for our region of interest. We're curious to understand how sqft living area relates to home sale price.
 ```{r}
 data(ames) ### ames from AmesHousing package
 
@@ -317,12 +317,8 @@ ames_2006_750_sqft_or_more <- ames %>%
     area_thousands = area/1000
   )
 ```
-Note: inference calcs faster using get_regressions_table(). This approach uses mathematical theory based formulas for generating table columns. Also, in practice, we apply more robust EDA methods before jumping straight to model statistical inference.
 
-```{r}
-# lm(log2_price ~ area_thousands, data=ames_2006_750_sqft_or_more) %>% 
-#   get_regression_table()
-```
+Note: inference calcs faster using `moderndive::get_regressions_table()`. This approach uses mathematical theory based formulas for inference outputs. Also, in practice, we apply more robust EDA methods before jumping straight to model statistical inference.
 
 Visualize relationship of interest. Likely improvements we can make with the model fit. However, focusing this notebook on the inference elements of analysis.
 ```{r}
@@ -338,6 +334,7 @@ ames_2006_750_sqft_or_more %>%
 
 Alpha significance level 0.05. P-value is very small (near zero).
 Evidence to reject null hypothesis in favor of the alternative hypothesis.
+Said differently, there is evidence to suggest a positive association between home living area square feet and home sale price (intuitively one would expect this).
 ```{r}
 set.seed(805)
 obs_stat_hprice <- ames_2006_750_sqft_or_more %>%
@@ -362,7 +359,7 @@ null_dist_hprice %>%
        x="Slope Coefficient")
 ```
 
-95% confidence bootstrap interval suggests we're 95% confident that true population slope is between 0.84 and 0.96. In other words, on average, for every 1000 square foot increase in living areas we'd expect log2 price to increase between 0.84 and 0.96. We can visually tie this with the linear regression line visualized above. 
+95% confidence bootstrap interval suggests we're 95% confident that the true population slope is between the lower bound and upper bound below. In other words, on average, for every 1000 square foot increase in living area we'd expect log2 price to increase between the lower bound and upper bound. We can visually tie this with the linear regression line plot. 
 ```{r}
 set.seed(805)
 boot_dist_hprice <- ames_2006_750_sqft_or_more %>%
@@ -388,7 +385,7 @@ boot_dist_hprice %>%
        y="Count")
 ```
 
-Example of how we can visually assess conditions. This part is subjective without clear black and white rules. Residuals are left skewed but some might consider the distribution close enough to normal. In practice, we'd investigate the residual plots further. If conditions aren't fully met then results should be tagged as provisional/inspirational. 
+Example of how we can visually assess conditions for linear regression inference. This part is subjective without clear black and white rules. Residuals are left skewed but some might consider the distribution close enough to normal. In practice, we'd investigate the residual plots further. If conditions aren't met then we likely wouldn't want to trust results. If conditions are partially met then results should be tagged as provisional/inspirational. 
 ```{r}
 fit <- lm(log2_price ~ area_thousands, data=ames_2006_750_sqft_or_more)
 ggplot2::autoplot(fit, which = 1:4)
